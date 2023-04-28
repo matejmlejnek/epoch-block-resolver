@@ -4,7 +4,9 @@ import json
 import sys
 import math
 
-url = 'https://rpcapi.fantom.network/'
+url_mainnet = 'https://rpcapi.fantom.network/'
+url_testnet = 'https://rpc.testnet.fantom.network/'
+url = ''
 
 cache = {}
 
@@ -82,7 +84,7 @@ def find_last(epoch, min, max):
 
 def load_block(epoch):
   j = get_block_by_number('latest')
-  max = j['blockid']
+  max = int(j['result']['number'], 16)
   current_epoch = int(j['result']['epoch'], 16)
   if current_epoch <= epoch:
     raise Exception('ERROR epoch: ', epoch,
@@ -92,10 +94,28 @@ def load_block(epoch):
   l = find_last(epoch, r[1], r[2])
   return [r[0], l]
 
+try:
+  # testnet switch
+  if sys.argv[2] == 't' or sys.argv[3] == 't':
+    url = url_testnet
+  else:
+    url = url_mainnet
+except:
+  url = url_mainnet 
+
 if sys.argv[1] == 'b':
+  # load epoch from block
   r = load_epoch(int(sys.argv[2], 10))
 elif sys.argv[1] == 'e':
+  # load block from epoch
   r = load_block(int(sys.argv[2], 10))
+elif sys.argv[1] == 'i': 
+  # block info
+  r = get_block_by_number(hex(int(sys.argv[2], 10)))['result']
+elif sys.argv[1] == 'l':
+  # last block and epoch
+  res = get_block_by_number('latest')['result']
+  r = "block: " + str(int(res['number'],16)) + " epoch: " + str(int(res['epoch'],16))
 else:
   r = load_block(int(sys.argv[1], 10))
 print(r)
